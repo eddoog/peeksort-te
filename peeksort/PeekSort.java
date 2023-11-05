@@ -12,7 +12,39 @@ public class PeekSort {
 		peeksort(a, left, right, left, right, new int[n]);
 	}
 
-	public static void peeksort(int[] A, int left, int right, int leftRunEnd, int rightRunStart, final int[] B) {
+	public static void peeksort(int[] A, int left, int right, int leftRunEnd, int rightRunStart, final int[] B) {	
+		if (leftRunEnd == right || rightRunStart == left) return; // Algorithm is presumably sorted already
+
+		int mid = left + ((right - left) >> 1); // Find the mid point = floor(right-left/2)
+		if (mid <= leftRunEnd) {
+			// |XXXXXXXX|XX     X|
+			peeksort(A, leftRunEnd+1, right, leftRunEnd+1,rightRunStart, B);
+			mergeRuns(A, left, leftRunEnd+1, right, B);
+		} else if (mid >= rightRunStart) {
+			// |XX     X|XXXXXXXX|
+			peeksort(A, left, rightRunStart-1, leftRunEnd, rightRunStart-1, B);
+			mergeRuns(A, left, rightRunStart, right, B);
+		} else {
+			// find middle run
+
+			int i = extendWeaklyIncreasingRunLeft(A, mid, left == leftRunEnd ? left : leftRunEnd+1);
+			int j = extendWeaklyIncreasingRunRight(A, mid, right == rightRunStart ? right : rightRunStart-1) ;
+			if (i == left && j == right) return;
+			if (mid - i < j - mid) {
+				// |XX     x|xxxx   X|
+				peeksort(A, left, i-1, leftRunEnd, i-1, B);
+				peeksort(A, i, right, j, rightRunStart, B);
+				mergeRuns(A,left, i, right, B);
+			} else {
+				// |XX   xxx|x      X|
+				peeksort(A, left, j, leftRunEnd, i, B);
+				peeksort(A, j+1, right, j+1, rightRunStart, B);
+				mergeRuns(A,left, j+1, right, B);
+			}
+		}
+	}
+
+    public static void moreOptimalPeekSort(int[] A, int left, int right, int leftRunEnd, int rightRunStart, final int[] B) {
 		if (leftRunEnd == right || rightRunStart == left) return;
 
 		int mid = left + ((right - left) >> 1); // Find the mid point = floor(right-left/2)
@@ -36,6 +68,7 @@ public class PeekSort {
 				j = mid+1 == rightRunStart ? mid : extendStrictlyDecreasingRunRight(A, mid+1,right == rightRunStart ? right : rightRunStart-1);
 				reverseRange(A, i, j);
 			}
+
 			if (i == left && j == right) return;
 			if (mid - i < j - mid) {
 				// |XX     x|xxxx   X|
@@ -50,8 +83,7 @@ public class PeekSort {
 			}
 		}
 	}
-
-    
+	
 	/**
 	 * Merges runs A[l..m-1] and A[m..r] in-place into A[l..r]
 	 * with Sedgewick's bitonic merge (Program 8.2 in Algorithms in C++)
